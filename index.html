@@ -8,14 +8,23 @@
 </head>
 <body>
     <div id="app">
-        <h1>Web Image Tools</h1>
-        <div class="upload-section">
-            <input type="file" id="file-picker" accept="image/*">
-            <label for="file-picker">Choose an image</label>
-        </div>
-        <div id="result-container" class="result-container">
-            <p>Select an image to see its metadata.</p>
-        </div>
+        <header>
+            <h1>Web Image Tools</h1>
+            <p class="text-muted">High-performance image processing powered by WebAssembly.</p>
+        </header>
+
+        <main class="card">
+            <div class="upload-section">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem; color: hsl(var(--muted-foreground))"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                <p style="margin: 0; font-weight: 500;">Click to upload or drag and drop</p>
+                <p class="text-muted" style="margin-top: 0.25rem;">PNG, JPG, or WEBP</p>
+                <input type="file" id="file-picker" accept="image/*">
+            </div>
+
+            <div id="result-container" class="result-container" style="margin-top: 1.5rem;">
+                <p class="text-muted" style="text-align: center; margin: 0;">Select an image to see its metadata.</p>
+            </div>
+        </main>
     </div>
     <script type="module" src="/js/main.ts"></script>
 </body>

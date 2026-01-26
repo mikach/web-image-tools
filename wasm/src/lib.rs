@@ -13,6 +13,9 @@ pub struct ImageMetadata {
     pub width: u32,
     pub height: u32,
     pub color_type: String,
+    pub bits_per_pixel: u16,
+    pub has_alpha: bool,
+    pub aspect_ratio: f64,
 }
 
 #[wasm_bindgen]
@@ -28,10 +31,15 @@ pub fn read_image_metadata(data: &[u8]) -> Result<ImageMetadata, String> {
     let img = reader.decode()
         .map_err(|e| format!("Failed to decode image: {}", e))?;
 
+    let color = img.color();
+    
     Ok(ImageMetadata {
         format,
         width: img.width(),
         height: img.height(),
-        color_type: format!("{:?}", img.color()),
+        color_type: format!("{:?}", color),
+        bits_per_pixel: color.bits_per_pixel(),
+        has_alpha: color.has_alpha(),
+        aspect_ratio: img.width() as f64 / img.height() as f64,
     })
 }
