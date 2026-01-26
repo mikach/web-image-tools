@@ -1,5 +1,6 @@
 node_modules
 wasm/target
+wasm/pkg
 
 build/
 
