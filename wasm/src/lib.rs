@@ -43,3 +43,23 @@ pub fn read_image_metadata(data: &[u8]) -> Result<ImageMetadata, String> {
         aspect_ratio: img.width() as f64 / img.height() as f64,
     })
 }
+
+#[wasm_bindgen]
+pub fn crop_image(data: &[u8], x: u32, y: u32, width: u32, height: u32) -> Result<Vec<u8>, String> {
+    let reader = ImageReader::new(Cursor::new(data))
+        .with_guessed_format()
+        .map_err(|e| format!("Failed to identify format: {}", e))?;
+
+    let format = reader.format().unwrap_or(image::ImageFormat::Png);
+
+    let img = reader.decode()
+        .map_err(|e| format!("Failed to decode image: {}", e))?;
+
+    let cropped = img.crop_imm(x, y, width, height);
+    
+    let mut output = Vec::new();
+    cropped.write_to(&mut Cursor::new(&mut output), format)
+        .map_err(|e| format!("Failed to encode cropped image: {}", e))?;
+    
+    Ok(output)
+}

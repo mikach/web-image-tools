@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build:wasm": "wasm-pack build wasm --target web --out-dir wasm/pkg",
+    "build:wasm": "wasm-pack build wasm --target web --out-dir pkg",
     "dev": "pnpm build:wasm && vite",
     "build": "pnpm build:wasm && vite build",
     "preview": "vite preview"
