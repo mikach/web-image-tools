@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 
 import init, { read_image_metadata, init_logging, crop_image } from '../wasm/pkg/wasm.js';
-import type { WorkerResponse, WorkerRequest } from './types';
+import type { WorkerResponse, WorkerRequest, ImageMetadata } from './types';
 
 let wasmInitialized = false;
 
@@ -17,54 +17,70 @@ async function initializeWasm() {
     }
 }
 
+interface WasmImageMetadata {
+    format: string;
+    width: number;
+    height: number;
+    color_type: string;
+    bits_per_pixel: number;
+    has_alpha: boolean;
+    aspect_ratio: number;
+    exif_orientation?: number;
+    camera_make?: string;
+    camera_model?: string;
+    date_taken?: string;
+}
+
+function mapWasmMetadata(metadata: WasmImageMetadata): ImageMetadata {
+    return {
+        format: metadata.format,
+        width: metadata.width,
+        height: metadata.height,
+        colorType: metadata.color_type,
+        bitsPerPixel: metadata.bits_per_pixel,
+        hasAlpha: metadata.has_alpha,
+        aspectRatio: metadata.aspect_ratio,
+        exifOrientation: metadata.exif_orientation,
+        cameraMake: metadata.camera_make,
+        cameraModel: metadata.camera_model,
+        dateTaken: metadata.date_taken,
+    };
+}
+
 self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
     try {
         await initializeWasm();
 
-        const { action, data: buffer, params: cropParams } = event.data;
-        const data = new Uint8Array(buffer);
+        const request = event.data;
+        const data = new Uint8Array(request.data);
 
-        if (action === 'crop' && cropParams) {
-            const croppedData = crop_image(data, cropParams.x, cropParams.y, cropParams.width, cropParams.height);
-            const metadata = read_image_metadata(croppedData);
+        if (request.action === 'crop') {
+            const { x, y, width, height } = request.params;
+            const croppedData = crop_image(data, x, y, width, height);
+            const metadata = read_image_metadata(croppedData) as WasmImageMetadata;
             
             const croppedBuffer = croppedData.buffer as ArrayBuffer;
             const response: WorkerResponse = {
                 success: true,
-                metadata: {
-                    format: metadata.format,
-                    width: metadata.width,
-                    height: metadata.height,
-                    colorType: metadata.color_type,
-                    bitsPerPixel: metadata.bits_per_pixel,
-                    hasAlpha: metadata.has_alpha,
-                    aspectRatio: metadata.aspect_ratio
-                },
+                metadata: mapWasmMetadata(metadata),
                 croppedImage: croppedBuffer
             };
             self.postMessage(response, [croppedBuffer]);
         } else {
-            const metadata = read_image_metadata(data);
+            const metadata = read_image_metadata(data) as WasmImageMetadata;
 
             const response: WorkerResponse = {
                 success: true,
-                metadata: {
-                    format: metadata.format,
-                    width: metadata.width,
-                    height: metadata.height,
-                    colorType: metadata.color_type,
-                    bitsPerPixel: metadata.bits_per_pixel,
-                    hasAlpha: metadata.has_alpha,
-                    aspectRatio: metadata.aspect_ratio
-                }
+                metadata: mapWasmMetadata(metadata)
             };
             self.postMessage(response);
         }
     } catch (error) {
-        console.error('Worker error:', error);
+        const action = event.data?.action ?? 'unknown';
+        console.error(`Worker error [${action}]:`, error);
         const response: WorkerResponse = {
             success: false,
-            error: error instanceof Error ? error.message : String(error)
+            error: `[${action}] ${error instanceof Error ? error.message : String(error)}`
         };
         self.postMessage(response);
     }

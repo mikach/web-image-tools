@@ -1,13 +1,41 @@
-import type { WorkerResponse, WorkerRequest, ImageMetadata } from './types';
+import type { WorkerResponse, ImageMetadata, MetadataRequest, CropRequest, CropParams } from './types';
+import * as dom from './dom';
+import { 
+    getInitialCropSelection, 
+    constrainCropSelection, 
+    getNaturalCropCoordinates,
+    setupCropInteraction 
+} from './cropping';
 
-// Constants
-const MIN_CROP_SIZE = 10;
-const INITIAL_CROP_RATIO = 0.8;
-
-// Initialize worker using Vite's worker loader
 const worker = new Worker(new URL('./worker.ts', import.meta.url), {
     type: 'module'
 });
+
+interface AppState {
+    view: 'dropzone' | 'result';
+    isProcessing: boolean;
+    isCropping: boolean;
+    currentImage: {
+        buffer: ArrayBuffer;
+        metadata: ImageMetadata | null;
+        fileName: string;
+        fileSize: number;
+    } | null;
+    cropSelection: CropParams;
+}
+
+let state: AppState = {
+    view: 'dropzone',
+    isProcessing: false,
+    isCropping: false,
+    currentImage: null,
+    cropSelection: { x: 0, y: 0, width: 0, height: 0 },
+};
+
+function setState(updates: Partial<AppState>) {
+    state = { ...state, ...updates };
+    renderState();
+}
 
 function formatFileSize(bytes: number): string {
     if (bytes < 1024) return `${bytes} B`;
@@ -15,99 +43,165 @@ function formatFileSize(bytes: number): string {
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
-let currentFileSize = 0;
-let currentFileName = '';
-let currentImageBuffer: ArrayBuffer | null = null;
+let activeObjectUrl: string | null = null;
 
-// DOM Elements
-const filePicker = document.getElementById('file-picker') as HTMLInputElement;
-const uploadSection = document.getElementById('upload-section') as HTMLDivElement;
-const dropzoneView = document.getElementById('dropzone-view') as HTMLElement;
-const resultView = document.getElementById('result-view') as HTMLElement;
-const resultContainer = document.getElementById('result-container') as HTMLDivElement;
-const imagePreview = document.getElementById('image-preview') as HTMLImageElement;
-const fileNameEl = document.getElementById('file-name') as HTMLHeadingElement;
-const changeImageBtn = document.getElementById('change-image-btn') as HTMLButtonElement;
-const cropBtn = document.getElementById('crop-btn') as HTMLButtonElement;
-const cropDoneBtn = document.getElementById('crop-done-btn') as HTMLButtonElement;
-const cropCancelBtn = document.getElementById('crop-cancel-btn') as HTMLButtonElement;
-const cropOverlay = document.getElementById('crop-overlay') as HTMLDivElement;
-const cropSelection = document.getElementById('crop-selection') as HTMLDivElement;
-const previewActions = document.querySelector('.preview-actions') as HTMLDivElement;
-const cropActions = document.getElementById('crop-actions') as HTMLDivElement;
-
-let isCropping = false;
-let cropData = { x: 0, y: 0, width: 0, height: 0 };
-
-// Interaction state
-let isDragging = false;
-let isResizing = false;
-let activeHandle: string | null = null;
-let startX = 0;
-let startY = 0;
-let startCropData = { x: 0, y: 0, width: 0, height: 0 };
-
-function showDropzoneView() {
-    dropzoneView.classList.remove('hidden');
-    resultView.classList.add('hidden');
+function setImagePreview(url: string): void {
+    if (activeObjectUrl) URL.revokeObjectURL(activeObjectUrl);
+    activeObjectUrl = url;
+    dom.imagePreview.src = url;
 }
 
-function showResultView() {
-    dropzoneView.classList.add('hidden');
-    resultView.classList.remove('hidden');
+function renderMetadataItem(label: string, value: string): string {
+    return `<div class="metadata-item">
+        <span class="metadata-label">${label}</span>
+        <span class="metadata-value">${value}</span>
+    </div>`;
 }
 
-function setButtonsDisabled(disabled: boolean) {
-    cropBtn.disabled = disabled;
-    changeImageBtn.disabled = disabled;
+function renderMetadata(metadata: ImageMetadata, fileSize: number): string {
+    const items = [
+        renderMetadataItem('Format', metadata.format),
+        renderMetadataItem('File Size', formatFileSize(fileSize)),
+        renderMetadataItem('Dimensions', `${metadata.width} × ${metadata.height}`),
+        renderMetadataItem('Color Type', metadata.colorType),
+        renderMetadataItem('Bits Per Pixel', String(metadata.bitsPerPixel)),
+        renderMetadataItem('Has Alpha', metadata.hasAlpha ? 'Yes' : 'No'),
+        renderMetadataItem('Aspect Ratio', metadata.aspectRatio.toFixed(2)),
+    ];
+
+    if (metadata.cameraMake || metadata.cameraModel) {
+        const camera = [metadata.cameraMake, metadata.cameraModel].filter(Boolean).join(' ');
+        items.push(renderMetadataItem('Camera', camera));
+    }
+
+    if (metadata.dateTaken) {
+        items.push(renderMetadataItem('Date Taken', metadata.dateTaken));
+    }
+
+    return items.join('');
+}
+
+function renderState() {
+    if (state.view === 'dropzone') {
+        dom.dropzoneView.classList.remove('hidden');
+        dom.resultView.classList.add('hidden');
+    } else {
+        dom.dropzoneView.classList.add('hidden');
+        dom.resultView.classList.remove('hidden');
+    }
+
+    dom.cropBtn.disabled = state.isProcessing;
+    dom.changeImageBtn.disabled = state.isProcessing;
+
+    if (state.isCropping) {
+        dom.cropOverlay.classList.remove('hidden');
+        dom.previewActions.classList.add('hidden');
+        dom.cropActions.classList.remove('hidden');
+    } else {
+        dom.cropOverlay.classList.add('hidden');
+        dom.previewActions.classList.remove('hidden');
+        dom.cropActions.classList.add('hidden');
+    }
+
+    dom.cropSelectionEl.style.left = `${state.cropSelection.x}px`;
+    dom.cropSelectionEl.style.top = `${state.cropSelection.y}px`;
+    dom.cropSelectionEl.style.width = `${state.cropSelection.width}px`;
+    dom.cropSelectionEl.style.height = `${state.cropSelection.height}px`;
+
+    if (state.isCropping && state.currentImage?.metadata) {
+        const natural = getNaturalCropCoordinates(state.cropSelection);
+        const w = Math.round(natural.width);
+        const h = Math.round(natural.height);
+        dom.cropDimensionsEl.textContent = `${w} × ${h} px`;
+    }
+
+    if (state.currentImage) {
+        dom.fileNameEl.textContent = state.currentImage.fileName;
+    }
+
+    if (state.currentImage?.metadata) {
+        dom.resultContainer.innerHTML = renderMetadata(
+            state.currentImage.metadata,
+            state.currentImage.fileSize
+        );
+    }
 }
 
 async function processFile(file: File) {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-        resultContainer.innerHTML = '<p style="color: hsl(var(--destructive));">Invalid file type. Please select an image file.</p>';
-        showResultView();
+        dom.resultContainer.innerHTML = '<p style="color: hsl(var(--destructive));">Invalid file type. Please select an image file.</p>';
+        setState({ view: 'result' });
         return;
     }
 
-    currentFileSize = file.size;
-    currentFileName = file.name;
+    dom.resultContainer.innerHTML = '<p class="text-muted">Processing image...</p>';
     
-    // Show result view with loading state
-    fileNameEl.textContent = currentFileName;
-    resultContainer.innerHTML = '<p class="text-muted">Processing image...</p>';
-    setButtonsDisabled(true);
-    
-    // Create image preview
     const objectUrl = URL.createObjectURL(file);
-    imagePreview.src = objectUrl;
-    imagePreview.onload = () => {
-        URL.revokeObjectURL(objectUrl);
-    };
-    imagePreview.onerror = () => {
-        URL.revokeObjectURL(objectUrl);
-    };
-    
-    showResultView();
+    setImagePreview(objectUrl);
 
     try {
         const arrayBuffer = await file.arrayBuffer();
-        currentImageBuffer = arrayBuffer.slice(0); // Keep a copy for cropping
         
-        const request: WorkerRequest = {
+        setState({
+            view: 'result',
+            isProcessing: true,
+            currentImage: {
+                buffer: arrayBuffer.slice(0),
+                metadata: null,
+                fileName: file.name,
+                fileSize: file.size,
+            },
+        });
+        
+        const request: MetadataRequest = {
             action: 'metadata',
             data: arrayBuffer
         };
         
         worker.postMessage(request, [request.data]);
     } catch (error) {
-        resultContainer.innerHTML = `<p style="color: hsl(var(--destructive));">Error reading file: ${error}</p>`;
+        dom.resultContainer.innerHTML = `<p style="color: hsl(var(--destructive));">Error reading file: ${error}</p>`;
+        setState({ isProcessing: false });
     }
 }
 
-// File picker change
-filePicker.addEventListener('change', (event) => {
+function startCropping() {
+    setState({
+        isCropping: true,
+        cropSelection: getInitialCropSelection(),
+    });
+}
+
+function finishCropping(apply: boolean) {
+    setState({ isCropping: false });
+
+    if (apply) {
+        if (!state.currentImage?.buffer) {
+            dom.resultContainer.innerHTML = '<p style="color: hsl(var(--destructive));">No image loaded.</p>';
+            return;
+        }
+
+        const naturalCrop = getNaturalCropCoordinates(state.cropSelection);
+
+        const request: CropRequest = {
+            action: 'crop',
+            data: state.currentImage.buffer.slice(0),
+            params: naturalCrop
+        };
+
+        dom.resultContainer.innerHTML = '<p class="text-muted">Cropping image...</p>';
+        setState({ isProcessing: true });
+        worker.postMessage(request, [request.data]);
+    }
+}
+
+function updateCropSelection(crop: CropParams) {
+    setState({ cropSelection: crop });
+}
+
+dom.filePicker.addEventListener('change', (event) => {
     const target = event.target as HTMLInputElement;
     const file = target.files?.[0];
     if (file) {
@@ -115,191 +209,44 @@ filePicker.addEventListener('change', (event) => {
     }
 });
 
-// Upload section click
-uploadSection.addEventListener('click', () => {
-    filePicker.click();
+dom.uploadSection.addEventListener('click', () => {
+    dom.filePicker.click();
 });
 
-// Change image button
-changeImageBtn.addEventListener('click', () => {
-    filePicker.click();
+dom.changeImageBtn.addEventListener('click', () => {
+    dom.filePicker.click();
 });
 
-// Crop button
-cropBtn.addEventListener('click', () => {
+dom.cropBtn.addEventListener('click', () => {
     startCropping();
 });
 
-// Crop Done button
-cropDoneBtn.addEventListener('click', () => {
+dom.cropDoneBtn.addEventListener('click', () => {
     finishCropping(true);
 });
 
-// Crop Cancel button
-cropCancelBtn.addEventListener('click', () => {
+dom.cropCancelBtn.addEventListener('click', () => {
     finishCropping(false);
 });
 
-function startCropping() {
-    isCropping = true;
-    cropOverlay.classList.remove('hidden');
-    previewActions.classList.add('hidden');
-    cropActions.classList.remove('hidden');
+setupCropInteraction(updateCropSelection);
 
-    // Initialize crop selection to percentage of image size
-    const imgWidth = imagePreview.clientWidth;
-    const imgHeight = imagePreview.clientHeight;
-    
-    const selWidth = imgWidth * INITIAL_CROP_RATIO;
-    const selHeight = imgHeight * INITIAL_CROP_RATIO;
-    const selX = (imgWidth - selWidth) / 2;
-    const selY = (imgHeight - selHeight) / 2;
-
-    updateCropSelection(selX, selY, selWidth, selHeight);
-}
-
-function finishCropping(apply: boolean) {
-    isCropping = false;
-    cropOverlay.classList.add('hidden');
-    previewActions.classList.remove('hidden');
-    cropActions.classList.add('hidden');
-
-    if (apply) {
-        // Calculate natural coordinates
-        const scaleX = imagePreview.naturalWidth / imagePreview.clientWidth;
-        const scaleY = imagePreview.naturalHeight / imagePreview.clientHeight;
-
-        const naturalCrop = {
-            x: Math.round(cropData.x * scaleX),
-            y: Math.round(cropData.y * scaleY),
-            width: Math.round(cropData.width * scaleX),
-            height: Math.round(cropData.height * scaleY)
-        };
-
-        if (!currentImageBuffer) {
-            resultContainer.innerHTML = '<p style="color: hsl(var(--destructive));">No image loaded.</p>';
-            return;
-        }
-
-        const request: WorkerRequest = {
-            action: 'crop',
-            data: currentImageBuffer.slice(0),
-            params: naturalCrop
-        };
-
-        resultContainer.innerHTML = '<p class="text-muted">Cropping image...</p>';
-        setButtonsDisabled(true);
-        worker.postMessage(request, [request.data]);
-    }
-}
-
-function updateCropSelection(x: number, y: number, width: number, height: number) {
-    const imgWidth = imagePreview.clientWidth;
-    const imgHeight = imagePreview.clientHeight;
-
-    // Constrain to image boundaries
-    x = Math.max(0, Math.min(x, imgWidth - MIN_CROP_SIZE));
-    y = Math.max(0, Math.min(y, imgHeight - MIN_CROP_SIZE));
-    width = Math.max(MIN_CROP_SIZE, Math.min(width, imgWidth - x));
-    height = Math.max(MIN_CROP_SIZE, Math.min(height, imgHeight - y));
-
-    cropData = { x, y, width, height };
-
-    cropSelection.style.left = `${x}px`;
-    cropSelection.style.top = `${y}px`;
-    cropSelection.style.width = `${width}px`;
-    cropSelection.style.height = `${height}px`;
-}
-
-// Interactive Selection Logic
-cropSelection.addEventListener('mousedown', (e) => {
-    if (!isCropping) return;
-    e.stopPropagation();
-    
-    const target = e.target as HTMLElement;
-    if (target.classList.contains('crop-handle')) {
-        isResizing = true;
-        activeHandle = target.getAttribute('data-handle');
-    } else {
-        isDragging = true;
-    }
-
-    startX = e.clientX;
-    startY = e.clientY;
-    startCropData = { ...cropData };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-});
-
-function handleMouseMove(e: MouseEvent) {
-    if (!isDragging && !isResizing) return;
-
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
-
-    if (isDragging) {
-        updateCropSelection(
-            startCropData.x + dx,
-            startCropData.y + dy,
-            startCropData.width,
-            startCropData.height
-        );
-    } else if (isResizing && activeHandle) {
-        let { x, y, width, height } = startCropData;
-
-        switch (activeHandle) {
-            case 'nw':
-                x += dx;
-                y += dy;
-                width -= dx;
-                height -= dy;
-                break;
-            case 'ne':
-                y += dy;
-                width += dx;
-                height -= dy;
-                break;
-            case 'sw':
-                x += dx;
-                width -= dx;
-                height += dy;
-                break;
-            case 'se':
-                width += dx;
-                height += dy;
-                break;
-        }
-
-        updateCropSelection(x, y, width, height);
-    }
-}
-
-function handleMouseUp() {
-    isDragging = false;
-    isResizing = false;
-    activeHandle = null;
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
-}
-
-// Drag and drop event listeners
-uploadSection.addEventListener('dragover', (event) => {
+dom.uploadSection.addEventListener('dragover', (event) => {
     event.preventDefault();
     event.stopPropagation();
-    uploadSection.classList.add('drag-over');
+    dom.uploadSection.classList.add('drag-over');
 });
 
-uploadSection.addEventListener('dragleave', (event) => {
+dom.uploadSection.addEventListener('dragleave', (event) => {
     event.preventDefault();
     event.stopPropagation();
-    uploadSection.classList.remove('drag-over');
+    dom.uploadSection.classList.remove('drag-over');
 });
 
-uploadSection.addEventListener('drop', (event) => {
+dom.uploadSection.addEventListener('drop', (event) => {
     event.preventDefault();
     event.stopPropagation();
-    uploadSection.classList.remove('drag-over');
+    dom.uploadSection.classList.remove('drag-over');
 
     const file = event.dataTransfer?.files?.[0];
     if (file) {
@@ -307,24 +254,23 @@ uploadSection.addEventListener('drop', (event) => {
     }
 });
 
-// Also allow drop on the whole document when in dropzone view
 document.addEventListener('dragover', (event) => {
-    if (!dropzoneView.classList.contains('hidden')) {
+    if (state.view === 'dropzone') {
         event.preventDefault();
-        uploadSection.classList.add('drag-over');
+        dom.uploadSection.classList.add('drag-over');
     }
 });
 
 document.addEventListener('dragleave', (event) => {
-    if (!dropzoneView.classList.contains('hidden') && !event.relatedTarget) {
-        uploadSection.classList.remove('drag-over');
+    if (state.view === 'dropzone' && !event.relatedTarget) {
+        dom.uploadSection.classList.remove('drag-over');
     }
 });
 
 document.addEventListener('drop', (event) => {
-    if (!dropzoneView.classList.contains('hidden')) {
+    if (state.view === 'dropzone') {
         event.preventDefault();
-        uploadSection.classList.remove('drag-over');
+        dom.uploadSection.classList.remove('drag-over');
         
         const file = event.dataTransfer?.files?.[0];
         if (file) {
@@ -340,61 +286,38 @@ worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
         const { metadata } = response;
         
         if ('croppedImage' in response && response.croppedImage) {
-            currentImageBuffer = response.croppedImage.slice(0);
-            currentFileSize = response.croppedImage.byteLength;
-            
             const format = metadata.format.toLowerCase();
             const mimeType = format === 'jpeg' ? 'image/jpeg' : `image/${format}`;
             const blob = new Blob([response.croppedImage], { type: mimeType });
             const objectUrl = URL.createObjectURL(blob);
-            imagePreview.src = objectUrl;
-            imagePreview.onload = () => {
-                URL.revokeObjectURL(objectUrl);
-            };
-            imagePreview.onerror = () => {
-                URL.revokeObjectURL(objectUrl);
-            };
-        }
+            setImagePreview(objectUrl);
 
-        resultContainer.innerHTML = `
-            <div class="metadata-item">
-                <span class="metadata-label">Format</span>
-                <span class="metadata-value">${metadata.format}</span>
-            </div>
-            <div class="metadata-item">
-                <span class="metadata-label">File Size</span>
-                <span class="metadata-value">${formatFileSize(currentFileSize)}</span>
-            </div>
-            <div class="metadata-item">
-                <span class="metadata-label">Dimensions</span>
-                <span class="metadata-value">${metadata.width} × ${metadata.height}</span>
-            </div>
-            <div class="metadata-item">
-                <span class="metadata-label">Color Type</span>
-                <span class="metadata-value">${metadata.colorType}</span>
-            </div>
-            <div class="metadata-item">
-                <span class="metadata-label">Bits Per Pixel</span>
-                <span class="metadata-value">${metadata.bitsPerPixel}</span>
-            </div>
-            <div class="metadata-item">
-                <span class="metadata-label">Has Alpha</span>
-                <span class="metadata-value">${metadata.hasAlpha ? 'Yes' : 'No'}</span>
-            </div>
-            <div class="metadata-item">
-                <span class="metadata-label">Aspect Ratio</span>
-                <span class="metadata-value">${metadata.aspectRatio.toFixed(2)}</span>
-            </div>
-        `;
-        setButtonsDisabled(false);
+            setState({
+                isProcessing: false,
+                currentImage: state.currentImage ? {
+                    ...state.currentImage,
+                    buffer: response.croppedImage.slice(0),
+                    fileSize: response.croppedImage.byteLength,
+                    metadata,
+                } : null,
+            });
+        } else {
+            setState({
+                isProcessing: false,
+                currentImage: state.currentImage ? {
+                    ...state.currentImage,
+                    metadata,
+                } : null,
+            });
+        }
     } else {
-        resultContainer.innerHTML = `<p style="color: hsl(var(--destructive));">Error processing image: ${response.error}</p>`;
-        setButtonsDisabled(false);
+        dom.resultContainer.innerHTML = `<p style="color: hsl(var(--destructive));">Error processing image: ${response.error}</p>`;
+        setState({ isProcessing: false });
     }
 };
 
 worker.onerror = (error) => {
     console.error('Worker error:', error);
-    resultContainer.innerHTML = `<p style="color: hsl(var(--destructive));">Worker error occurred.</p>`;
-    setButtonsDisabled(false);
+    dom.resultContainer.innerHTML = `<p style="color: hsl(var(--destructive));">Worker error occurred.</p>`;
+    setState({ isProcessing: false });
 };

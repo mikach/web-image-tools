@@ -6,6 +6,10 @@ export interface ImageMetadata {
   bitsPerPixel: number;
   hasAlpha: boolean;
   aspectRatio: number;
+  exifOrientation?: number;
+  cameraMake?: string;
+  cameraModel?: string;
+  dateTaken?: string;
 }
 
 export interface CropParams {
@@ -15,11 +19,18 @@ export interface CropParams {
   height: number;
 }
 
-export interface WorkerRequest {
-  action: 'metadata' | 'crop';
+export interface MetadataRequest {
+  action: 'metadata';
   data: ArrayBuffer;
-  params?: CropParams;
 }
+
+export interface CropRequest {
+  action: 'crop';
+  data: ArrayBuffer;
+  params: CropParams;
+}
+
+export type WorkerRequest = MetadataRequest | CropRequest;
 
 export interface WorkerSuccessResponse {
   success: true;

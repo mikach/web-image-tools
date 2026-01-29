@@ -13,7 +13,6 @@
             <p class="text-muted">High-performance image processing powered by WebAssembly.</p>
         </header>
 
-        <!-- Initial dropzone view (centered) -->
         <main id="dropzone-view" class="dropzone-view">
             <div class="upload-section" id="upload-section">
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="upload-icon" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
@@ -24,16 +23,15 @@
             </div>
         </main>
 
-        <!-- Two-column result view (hidden initially) -->
         <main id="result-view" class="result-view hidden">
             <div class="result-grid">
-                <!-- Left column: Image preview -->
                 <div class="preview-column">
                     <div class="card preview-card" id="preview-card">
                         <div class="preview-wrapper">
                             <img id="image-preview" src="" alt="Image preview">
                             <div id="crop-overlay" class="crop-overlay hidden">
                                 <div id="crop-selection" class="crop-selection">
+                                    <div id="crop-dimensions" class="crop-dimensions"></div>
                                     <div class="crop-handle nw" data-handle="nw"></div>
                                     <div class="crop-handle ne" data-handle="ne"></div>
                                     <div class="crop-handle sw" data-handle="sw"></div>
@@ -43,22 +41,21 @@
                         </div>
                     </div>
                     <div class="preview-actions">
-                        <button id="crop-btn" class="btn-primary">
+                        <button id="crop-btn" class="btn btn-primary">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>
                             Crop
                         </button>
-                        <button id="change-image-btn" class="btn-secondary">
+                        <button id="change-image-btn" class="btn btn-secondary">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
                             Change image
                         </button>
                     </div>
                     <div id="crop-actions" class="preview-actions hidden">
-                        <button id="crop-done-btn" class="btn-primary">Done</button>
-                        <button id="crop-cancel-btn" class="btn-secondary">Cancel</button>
+                        <button id="crop-done-btn" class="btn btn-primary">Done</button>
+                        <button id="crop-cancel-btn" class="btn btn-secondary">Cancel</button>
                     </div>
                 </div>
 
-                <!-- Right column: Info -->
                 <div class="info-column">
                     <div class="card info-card">
                         <div class="info-header">
