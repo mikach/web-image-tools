@@ -1,4 +1,4 @@
-import type { WorkerResponse, ImageMetadata, MetadataRequest, CropRequest, CropParams, ResizeRequest, ResizeParams } from './types';
+import type { WorkerResponse, ImageMetadata, MetadataRequest, CropRequest, CropParams, ResizeRequest, ResizeParams, RotateRequest, RotateDirection } from './types';
 import * as dom from './dom';
 import { 
     getInitialCropSelection, 
@@ -99,6 +99,8 @@ function renderState() {
     }
 
     dom.cropBtn.disabled = state.isProcessing;
+    dom.rotateLeftBtn.disabled = state.isProcessing;
+    dom.rotateRightBtn.disabled = state.isProcessing;
     dom.resizeBtn.disabled = state.isProcessing;
     dom.changeImageBtn.disabled = state.isProcessing;
 
@@ -263,6 +265,23 @@ function updateResizeParams(params: Partial<ResizeParams>) {
     setState({ resizeParams: { ...state.resizeParams, ...params } });
 }
 
+function rotateImage(direction: RotateDirection) {
+    if (!state.currentImage?.buffer) {
+        dom.resultContainer.innerHTML = '<p style="color: hsl(var(--destructive));">No image loaded.</p>';
+        return;
+    }
+
+    const request: RotateRequest = {
+        action: 'rotate',
+        data: state.currentImage.buffer.slice(0),
+        direction
+    };
+
+    dom.resultContainer.innerHTML = '<p class="text-muted">Rotating image...</p>';
+    setState({ isProcessing: true });
+    worker.postMessage(request, [request.data]);
+}
+
 dom.filePicker.addEventListener('change', (event) => {
     const target = event.target as HTMLInputElement;
     const file = target.files?.[0];
@@ -281,6 +300,14 @@ dom.changeImageBtn.addEventListener('click', () => {
 
 dom.cropBtn.addEventListener('click', () => {
     startCropping();
+});
+
+dom.rotateLeftBtn.addEventListener('click', () => {
+    rotateImage('left');
+});
+
+dom.rotateRightBtn.addEventListener('click', () => {
+    rotateImage('right');
 });
 
 dom.cropDoneBtn.addEventListener('click', () => {
@@ -390,6 +417,22 @@ worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
                     ...state.currentImage,
                     buffer: response.resizedImage.slice(0),
                     fileSize: response.resizedImage.byteLength,
+                    metadata,
+                } : null,
+            });
+        } else if ('rotatedImage' in response && response.rotatedImage) {
+            const format = metadata.format.toLowerCase();
+            const mimeType = format === 'jpeg' ? 'image/jpeg' : `image/${format}`;
+            const blob = new Blob([response.rotatedImage], { type: mimeType });
+            const objectUrl = URL.createObjectURL(blob);
+            setImagePreview(objectUrl);
+
+            setState({
+                isProcessing: false,
+                currentImage: state.currentImage ? {
+                    ...state.currentImage,
+                    buffer: response.rotatedImage.slice(0),
+                    fileSize: response.rotatedImage.byteLength,
                     metadata,
                 } : null,
             });

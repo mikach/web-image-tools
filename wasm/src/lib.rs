@@ -148,3 +148,20 @@ pub fn resize_image(
 
     Ok(output)
 }
+
+#[wasm_bindgen]
+pub fn rotate_image(data: &[u8], direction: &str) -> Result<Vec<u8>, String> {
+    let decoded = decode_image(data)?;
+
+    let rotated = match direction {
+        "left" => decoded.img.rotate270(),   // 270° = 90° counter-clockwise
+        "right" => decoded.img.rotate90(),   // 90° = 90° clockwise
+        _ => return Err("Invalid rotation direction".to_string()),
+    };
+
+    let mut output = Vec::new();
+    rotated.write_to(&mut Cursor::new(&mut output), decoded.format)
+        .map_err(|e| format!("Failed to encode rotated image: {}", e))?;
+
+    Ok(output)
+}

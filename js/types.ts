@@ -45,13 +45,22 @@ export interface ResizeRequest {
   params: ResizeParams;
 }
 
-export type WorkerRequest = MetadataRequest | CropRequest | ResizeRequest;
+export type RotateDirection = 'left' | 'right';
+
+export interface RotateRequest {
+  action: 'rotate';
+  data: ArrayBuffer;
+  direction: RotateDirection;
+}
+
+export type WorkerRequest = MetadataRequest | CropRequest | ResizeRequest | RotateRequest;
 
 export interface WorkerSuccessResponse {
   success: true;
   metadata: ImageMetadata;
   croppedImage?: ArrayBuffer;
   resizedImage?: ArrayBuffer;
+  rotatedImage?: ArrayBuffer;
 }
 
 export interface WorkerErrorResponse {
