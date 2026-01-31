@@ -10,6 +10,14 @@ export interface ImageMetadata {
   cameraMake?: string;
   cameraModel?: string;
   dateTaken?: string;
+  iso?: number;
+  aperture?: string;
+  shutterSpeed?: string;
+  focalLength?: string;
+  flash?: string;
+  lensModel?: string;
+  software?: string;
+  exposureProgram?: string;
 }
 
 export interface CropParams {

@@ -29,6 +29,14 @@ interface WasmImageMetadata {
     camera_make?: string;
     camera_model?: string;
     date_taken?: string;
+    iso?: number;
+    aperture?: string;
+    shutter_speed?: string;
+    focal_length?: string;
+    flash?: string;
+    lens_model?: string;
+    software?: string;
+    exposure_program?: string;
 }
 
 function mapWasmMetadata(metadata: WasmImageMetadata): ImageMetadata {
@@ -44,6 +52,14 @@ function mapWasmMetadata(metadata: WasmImageMetadata): ImageMetadata {
         cameraMake: metadata.camera_make,
         cameraModel: metadata.camera_model,
         dateTaken: metadata.date_taken,
+        iso: metadata.iso,
+        aperture: metadata.aperture,
+        shutterSpeed: metadata.shutter_speed,
+        focalLength: metadata.focal_length,
+        flash: metadata.flash,
+        lensModel: metadata.lens_model,
+        software: metadata.software,
+        exposureProgram: metadata.exposure_program,
     };
 }
 

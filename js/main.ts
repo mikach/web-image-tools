@@ -77,13 +77,47 @@ function renderMetadata(metadata: ImageMetadata, fileSize: number): string {
         renderMetadataItem('Aspect Ratio', metadata.aspectRatio.toFixed(2)),
     ];
 
+    // Camera info
     if (metadata.cameraMake || metadata.cameraModel) {
         const camera = [metadata.cameraMake, metadata.cameraModel].filter(Boolean).join(' ');
         items.push(renderMetadataItem('Camera', camera));
     }
 
+    if (metadata.lensModel) {
+        items.push(renderMetadataItem('Lens', metadata.lensModel));
+    }
+
     if (metadata.dateTaken) {
         items.push(renderMetadataItem('Date Taken', metadata.dateTaken));
+    }
+
+    // Exposure settings
+    if (metadata.iso) {
+        items.push(renderMetadataItem('ISO', String(metadata.iso)));
+    }
+
+    if (metadata.aperture) {
+        items.push(renderMetadataItem('Aperture', metadata.aperture));
+    }
+
+    if (metadata.shutterSpeed) {
+        items.push(renderMetadataItem('Shutter Speed', metadata.shutterSpeed));
+    }
+
+    if (metadata.focalLength) {
+        items.push(renderMetadataItem('Focal Length', metadata.focalLength));
+    }
+
+    if (metadata.exposureProgram) {
+        items.push(renderMetadataItem('Exposure Program', metadata.exposureProgram));
+    }
+
+    if (metadata.flash) {
+        items.push(renderMetadataItem('Flash', metadata.flash));
+    }
+
+    if (metadata.software) {
+        items.push(renderMetadataItem('Software', metadata.software));
     }
 
     return items.join('');
