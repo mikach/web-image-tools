@@ -418,3 +418,102 @@ h1 {
   gap: 0.5rem;
   margin-top: 0.5rem;
 }
+
+/* Adjust controls */
+.adjust-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1rem;
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+}
+
+.adjust-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.adjust-group-title {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: hsl(var(--muted-foreground));
+}
+
+.adjust-slider {
+  display: grid;
+  grid-template-columns: 90px 1fr 45px;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.adjust-slider-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+}
+
+.adjust-slider input[type="range"] {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: hsl(var(--muted));
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.adjust-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: hsl(var(--primary));
+  cursor: pointer;
+  border: 2px solid hsl(var(--background));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.1s ease;
+}
+
+.adjust-slider input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+.adjust-slider input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: hsl(var(--primary));
+  cursor: pointer;
+  border: 2px solid hsl(var(--background));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.1s ease;
+}
+
+.adjust-slider input[type="range"]::-moz-range-thumb:hover {
+  transform: scale(1.1);
+}
+
+.adjust-slider-value {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.adjust-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid hsl(var(--border));
+}

@@ -1,4 +1,4 @@
-import type { WorkerResponse, ImageMetadata, MetadataRequest, CropRequest, CropParams, ResizeRequest, ResizeParams, RotateRequest, RotateDirection } from './types';
+import type { WorkerResponse, ImageMetadata, MetadataRequest, CropRequest, CropParams, ResizeRequest, ResizeParams, RotateRequest, RotateDirection, AdjustParams, AdjustRequest } from './types';
 import * as dom from './dom';
 import { 
     getInitialCropSelection, 
@@ -10,6 +10,12 @@ import {
     initResizeState,
     setupResizeInputs
 } from './resizing';
+import {
+    getDefaultAdjustParams,
+    resetSliders,
+    getCurrentAdjustParams,
+    setupAdjustmentSliders
+} from './adjustments';
 
 const worker = new Worker(new URL('./worker.ts', import.meta.url), {
     type: 'module'
@@ -20,6 +26,7 @@ interface AppState {
     isProcessing: boolean;
     isCropping: boolean;
     isResizing: boolean;
+    isAdjusting: boolean;
     currentImage: {
         buffer: ArrayBuffer;
         metadata: ImageMetadata | null;
@@ -28,6 +35,7 @@ interface AppState {
     } | null;
     cropSelection: CropParams;
     resizeParams: ResizeParams;
+    adjustParams: AdjustParams;
 }
 
 let state: AppState = {
@@ -35,9 +43,11 @@ let state: AppState = {
     isProcessing: false,
     isCropping: false,
     isResizing: false,
+    isAdjusting: false,
     currentImage: null,
     cropSelection: { x: 0, y: 0, width: 0, height: 0 },
     resizeParams: { width: 0, height: 0, filter: 'lanczos3', maintainAspectRatio: true },
+    adjustParams: getDefaultAdjustParams(),
 };
 
 function setState(updates: Partial<AppState>) {
@@ -136,6 +146,7 @@ function renderState() {
     dom.rotateLeftBtn.disabled = state.isProcessing;
     dom.rotateRightBtn.disabled = state.isProcessing;
     dom.resizeBtn.disabled = state.isProcessing;
+    dom.adjustBtn.disabled = state.isProcessing;
     dom.changeImageBtn.disabled = state.isProcessing;
 
     if (state.isCropping) {
@@ -143,16 +154,25 @@ function renderState() {
         dom.previewActions.classList.add('hidden');
         dom.cropActions.classList.remove('hidden');
         dom.resizeControls.classList.add('hidden');
+        dom.adjustControls.classList.add('hidden');
     } else if (state.isResizing) {
         dom.cropOverlay.classList.add('hidden');
         dom.previewActions.classList.add('hidden');
         dom.cropActions.classList.add('hidden');
         dom.resizeControls.classList.remove('hidden');
+        dom.adjustControls.classList.add('hidden');
+    } else if (state.isAdjusting) {
+        dom.cropOverlay.classList.add('hidden');
+        dom.previewActions.classList.add('hidden');
+        dom.cropActions.classList.add('hidden');
+        dom.resizeControls.classList.add('hidden');
+        dom.adjustControls.classList.remove('hidden');
     } else {
         dom.cropOverlay.classList.add('hidden');
         dom.previewActions.classList.remove('hidden');
         dom.cropActions.classList.add('hidden');
         dom.resizeControls.classList.add('hidden');
+        dom.adjustControls.classList.add('hidden');
     }
 
     dom.cropSelectionEl.style.left = `${state.cropSelection.x}px`;
@@ -316,6 +336,39 @@ function rotateImage(direction: RotateDirection) {
     worker.postMessage(request, [request.data]);
 }
 
+function startAdjusting() {
+    resetSliders();
+    setState({
+        isAdjusting: true,
+        adjustParams: getDefaultAdjustParams(),
+    });
+}
+
+function finishAdjusting(apply: boolean) {
+    setState({ isAdjusting: false });
+
+    if (apply) {
+        if (!state.currentImage?.buffer) {
+            dom.resultContainer.innerHTML = '<p style="color: hsl(var(--destructive));">No image loaded.</p>';
+            return;
+        }
+
+        const request: AdjustRequest = {
+            action: 'adjust',
+            data: state.currentImage.buffer.slice(0),
+            params: state.adjustParams
+        };
+
+        dom.resultContainer.innerHTML = '<p class="text-muted">Adjusting image...</p>';
+        setState({ isProcessing: true });
+        worker.postMessage(request, [request.data]);
+    }
+}
+
+function updateAdjustParams(params: AdjustParams) {
+    setState({ adjustParams: params });
+}
+
 dom.filePicker.addEventListener('change', (event) => {
     const target = event.target as HTMLInputElement;
     const file = target.files?.[0];
@@ -367,6 +420,25 @@ dom.resizeCancelBtn.addEventListener('click', () => {
 });
 
 setupResizeInputs(updateResizeParams);
+
+dom.adjustBtn.addEventListener('click', () => {
+    startAdjusting();
+});
+
+dom.adjustApplyBtn.addEventListener('click', () => {
+    finishAdjusting(true);
+});
+
+dom.adjustCancelBtn.addEventListener('click', () => {
+    finishAdjusting(false);
+});
+
+dom.adjustResetBtn.addEventListener('click', () => {
+    resetSliders();
+    setState({ adjustParams: getDefaultAdjustParams() });
+});
+
+setupAdjustmentSliders(updateAdjustParams);
 
 dom.uploadSection.addEventListener('dragover', (event) => {
     event.preventDefault();
@@ -467,6 +539,22 @@ worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
                     ...state.currentImage,
                     buffer: response.rotatedImage.slice(0),
                     fileSize: response.rotatedImage.byteLength,
+                    metadata,
+                } : null,
+            });
+        } else if ('adjustedImage' in response && response.adjustedImage) {
+            const format = metadata.format.toLowerCase();
+            const mimeType = format === 'jpeg' ? 'image/jpeg' : `image/${format}`;
+            const blob = new Blob([response.adjustedImage], { type: mimeType });
+            const objectUrl = URL.createObjectURL(blob);
+            setImagePreview(objectUrl);
+
+            setState({
+                isProcessing: false,
+                currentImage: state.currentImage ? {
+                    ...state.currentImage,
+                    buffer: response.adjustedImage.slice(0),
+                    fileSize: response.adjustedImage.byteLength,
                     metadata,
                 } : null,
             });

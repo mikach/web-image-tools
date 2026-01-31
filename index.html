@@ -55,6 +55,10 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
                             Resize
                         </button>
+                        <button id="adjust-btn" class="btn btn-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                            Adjust
+                        </button>
                         <button id="change-image-btn" class="btn btn-secondary">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
                             Change image
@@ -90,6 +94,67 @@
                         <div class="resize-actions">
                             <button id="resize-apply-btn" class="btn btn-primary">Apply</button>
                             <button id="resize-cancel-btn" class="btn btn-secondary">Cancel</button>
+                        </div>
+                    </div>
+                    <div id="adjust-controls" class="adjust-controls hidden">
+                        <div class="adjust-group">
+                            <h4 class="adjust-group-title">Tone</h4>
+                            <label class="adjust-slider">
+                                <span class="adjust-slider-label">Brightness</span>
+                                <input type="range" id="adjust-brightness" min="-100" max="100" value="0">
+                                <span id="adjust-brightness-value" class="adjust-slider-value">0</span>
+                            </label>
+                            <label class="adjust-slider">
+                                <span class="adjust-slider-label">Contrast</span>
+                                <input type="range" id="adjust-contrast" min="-100" max="100" value="0">
+                                <span id="adjust-contrast-value" class="adjust-slider-value">0</span>
+                            </label>
+                            <label class="adjust-slider">
+                                <span class="adjust-slider-label">Exposure</span>
+                                <input type="range" id="adjust-exposure" min="-200" max="200" value="0">
+                                <span id="adjust-exposure-value" class="adjust-slider-value">0</span>
+                            </label>
+                            <label class="adjust-slider">
+                                <span class="adjust-slider-label">Gamma</span>
+                                <input type="range" id="adjust-gamma" min="10" max="300" value="100">
+                                <span id="adjust-gamma-value" class="adjust-slider-value">1.0</span>
+                            </label>
+                        </div>
+                        <div class="adjust-group">
+                            <h4 class="adjust-group-title">Color</h4>
+                            <label class="adjust-slider">
+                                <span class="adjust-slider-label">Saturation</span>
+                                <input type="range" id="adjust-saturation" min="0" max="200" value="100">
+                                <span id="adjust-saturation-value" class="adjust-slider-value">100</span>
+                            </label>
+                            <label class="adjust-slider">
+                                <span class="adjust-slider-label">Hue</span>
+                                <input type="range" id="adjust-hue" min="-180" max="180" value="0">
+                                <span id="adjust-hue-value" class="adjust-slider-value">0°</span>
+                            </label>
+                            <label class="adjust-slider">
+                                <span class="adjust-slider-label">Vibrance</span>
+                                <input type="range" id="adjust-vibrance" min="-100" max="100" value="0">
+                                <span id="adjust-vibrance-value" class="adjust-slider-value">0</span>
+                            </label>
+                        </div>
+                        <div class="adjust-group">
+                            <h4 class="adjust-group-title">Light</h4>
+                            <label class="adjust-slider">
+                                <span class="adjust-slider-label">Shadows</span>
+                                <input type="range" id="adjust-shadows" min="-100" max="100" value="0">
+                                <span id="adjust-shadows-value" class="adjust-slider-value">0</span>
+                            </label>
+                            <label class="adjust-slider">
+                                <span class="adjust-slider-label">Highlights</span>
+                                <input type="range" id="adjust-highlights" min="-100" max="100" value="0">
+                                <span id="adjust-highlights-value" class="adjust-slider-value">0</span>
+                            </label>
+                        </div>
+                        <div class="adjust-actions">
+                            <button id="adjust-apply-btn" class="btn btn-primary">Apply</button>
+                            <button id="adjust-cancel-btn" class="btn btn-secondary">Cancel</button>
+                            <button id="adjust-reset-btn" class="btn btn-secondary">Reset</button>
                         </div>
                     </div>
                 </div>

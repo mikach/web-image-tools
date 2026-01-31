@@ -38,3 +38,32 @@ export const maintainRatioCheckbox = getElement<HTMLInputElement>('maintain-rati
 export const resizeFilterSelect = getElement<HTMLSelectElement>('resize-filter');
 export const resizeApplyBtn = getElement<HTMLButtonElement>('resize-apply-btn');
 export const resizeCancelBtn = getElement<HTMLButtonElement>('resize-cancel-btn');
+
+// Adjust elements
+export const adjustBtn = getElement<HTMLButtonElement>('adjust-btn');
+export const adjustControls = getElement<HTMLDivElement>('adjust-controls');
+
+// Adjust sliders
+export const adjustBrightnessInput = getElement<HTMLInputElement>('adjust-brightness');
+export const adjustBrightnessValue = getElement<HTMLSpanElement>('adjust-brightness-value');
+export const adjustContrastInput = getElement<HTMLInputElement>('adjust-contrast');
+export const adjustContrastValue = getElement<HTMLSpanElement>('adjust-contrast-value');
+export const adjustExposureInput = getElement<HTMLInputElement>('adjust-exposure');
+export const adjustExposureValue = getElement<HTMLSpanElement>('adjust-exposure-value');
+export const adjustGammaInput = getElement<HTMLInputElement>('adjust-gamma');
+export const adjustGammaValue = getElement<HTMLSpanElement>('adjust-gamma-value');
+export const adjustSaturationInput = getElement<HTMLInputElement>('adjust-saturation');
+export const adjustSaturationValue = getElement<HTMLSpanElement>('adjust-saturation-value');
+export const adjustHueInput = getElement<HTMLInputElement>('adjust-hue');
+export const adjustHueValue = getElement<HTMLSpanElement>('adjust-hue-value');
+export const adjustVibranceInput = getElement<HTMLInputElement>('adjust-vibrance');
+export const adjustVibranceValue = getElement<HTMLSpanElement>('adjust-vibrance-value');
+export const adjustShadowsInput = getElement<HTMLInputElement>('adjust-shadows');
+export const adjustShadowsValue = getElement<HTMLSpanElement>('adjust-shadows-value');
+export const adjustHighlightsInput = getElement<HTMLInputElement>('adjust-highlights');
+export const adjustHighlightsValue = getElement<HTMLSpanElement>('adjust-highlights-value');
+
+// Adjust action buttons
+export const adjustApplyBtn = getElement<HTMLButtonElement>('adjust-apply-btn');
+export const adjustCancelBtn = getElement<HTMLButtonElement>('adjust-cancel-btn');
+export const adjustResetBtn = getElement<HTMLButtonElement>('adjust-reset-btn');

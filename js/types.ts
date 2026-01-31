@@ -61,7 +61,25 @@ export interface RotateRequest {
   direction: RotateDirection;
 }
 
-export type WorkerRequest = MetadataRequest | CropRequest | ResizeRequest | RotateRequest;
+export interface AdjustParams {
+  brightness: number;   // -100 to +100
+  contrast: number;     // -100 to +100
+  saturation: number;   // 0 to 200 (100 = original, maps to 0-2)
+  hue: number;          // -180 to +180
+  exposure: number;     // -200 to +200 (maps to -2.0 to +2.0 stops)
+  gamma: number;        // 10 to 300 (maps to 0.1 to 3.0)
+  shadows: number;      // -100 to +100
+  highlights: number;   // -100 to +100
+  vibrance: number;     // -100 to +100
+}
+
+export interface AdjustRequest {
+  action: 'adjust';
+  data: ArrayBuffer;
+  params: AdjustParams;
+}
+
+export type WorkerRequest = MetadataRequest | CropRequest | ResizeRequest | RotateRequest | AdjustRequest;
 
 export interface WorkerSuccessResponse {
   success: true;
@@ -69,6 +87,7 @@ export interface WorkerSuccessResponse {
   croppedImage?: ArrayBuffer;
   resizedImage?: ArrayBuffer;
   rotatedImage?: ArrayBuffer;
+  adjustedImage?: ArrayBuffer;
 }
 
 export interface WorkerErrorResponse {

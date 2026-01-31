@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-import init, { read_image_metadata, init_logging, crop_image, resize_image, rotate_image } from '../wasm/pkg/wasm.js';
+import init, { read_image_metadata, init_logging, crop_image, resize_image, rotate_image, adjust_image } from '../wasm/pkg/wasm.js';
 import type { WorkerResponse, WorkerRequest, ImageMetadata } from './types';
 
 let wasmInitialized = false;
@@ -105,6 +105,35 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
                 rotatedImage: rotatedBuffer
             };
             self.postMessage(response, [rotatedBuffer]);
+        } else if (request.action === 'adjust') {
+            const { brightness, contrast, saturation, hue, exposure, gamma, shadows, highlights, vibrance } = request.params;
+            
+            // Map UI values to WASM function parameters
+            const saturationMapped = saturation / 100;      // 0-200 -> 0-2
+            const exposureMapped = exposure / 100;          // -200 to +200 -> -2 to +2
+            const gammaMapped = gamma / 100;                // 10-300 -> 0.1-3.0
+            
+            const adjustedData = adjust_image(
+                data,
+                brightness,
+                contrast,
+                saturationMapped,
+                hue,
+                exposureMapped,
+                gammaMapped,
+                shadows,
+                highlights,
+                vibrance
+            );
+            const metadata = read_image_metadata(adjustedData) as WasmImageMetadata;
+
+            const adjustedBuffer = adjustedData.buffer as ArrayBuffer;
+            const response: WorkerResponse = {
+                success: true,
+                metadata: mapWasmMetadata(metadata),
+                adjustedImage: adjustedBuffer
+            };
+            self.postMessage(response, [adjustedBuffer]);
         } else {
             const metadata = read_image_metadata(data) as WasmImageMetadata;
 
