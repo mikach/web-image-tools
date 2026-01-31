@@ -26,3 +26,13 @@ export const cropSelectionEl = getElement<HTMLDivElement>('crop-selection');
 export const cropDimensionsEl = getElement<HTMLDivElement>('crop-dimensions');
 export const previewActions = querySelector<HTMLDivElement>('.preview-actions');
 export const cropActions = getElement<HTMLDivElement>('crop-actions');
+
+// Resize elements
+export const resizeBtn = getElement<HTMLButtonElement>('resize-btn');
+export const resizeControls = getElement<HTMLDivElement>('resize-controls');
+export const resizeWidthInput = getElement<HTMLInputElement>('resize-width');
+export const resizeHeightInput = getElement<HTMLInputElement>('resize-height');
+export const maintainRatioCheckbox = getElement<HTMLInputElement>('maintain-ratio');
+export const resizeFilterSelect = getElement<HTMLSelectElement>('resize-filter');
+export const resizeApplyBtn = getElement<HTMLButtonElement>('resize-apply-btn');
+export const resizeCancelBtn = getElement<HTMLButtonElement>('resize-cancel-btn');

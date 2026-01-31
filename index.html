@@ -45,6 +45,10 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>
                             Crop
                         </button>
+                        <button id="resize-btn" class="btn btn-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+                            Resize
+                        </button>
                         <button id="change-image-btn" class="btn btn-secondary">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
                             Change image
@@ -53,6 +57,34 @@
                     <div id="crop-actions" class="preview-actions hidden">
                         <button id="crop-done-btn" class="btn btn-primary">Done</button>
                         <button id="crop-cancel-btn" class="btn btn-secondary">Cancel</button>
+                    </div>
+                    <div id="resize-controls" class="resize-controls hidden">
+                        <div class="resize-input-group">
+                            <label class="resize-label">
+                                Width
+                                <input type="number" id="resize-width" min="1" max="16384">
+                            </label>
+                            <label class="resize-label">
+                                Height
+                                <input type="number" id="resize-height" min="1" max="16384">
+                            </label>
+                        </div>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="maintain-ratio" checked>
+                            Maintain aspect ratio
+                        </label>
+                        <label class="resize-label">
+                            Quality
+                            <select id="resize-filter">
+                                <option value="lanczos3">High (Lanczos)</option>
+                                <option value="catmull_rom">Medium (Catmull-Rom)</option>
+                                <option value="nearest">Fast (Nearest)</option>
+                            </select>
+                        </label>
+                        <div class="resize-actions">
+                            <button id="resize-apply-btn" class="btn btn-primary">Apply</button>
+                            <button id="resize-cancel-btn" class="btn btn-secondary">Cancel</button>
+                        </div>
                     </div>
                 </div>
 

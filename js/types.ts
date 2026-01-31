@@ -19,6 +19,15 @@ export interface CropParams {
   height: number;
 }
 
+export type ResizeFilter = 'nearest' | 'triangle' | 'catmull_rom' | 'gaussian' | 'lanczos3';
+
+export interface ResizeParams {
+  width: number;
+  height: number;
+  filter: ResizeFilter;
+  maintainAspectRatio: boolean;
+}
+
 export interface MetadataRequest {
   action: 'metadata';
   data: ArrayBuffer;
@@ -30,12 +39,19 @@ export interface CropRequest {
   params: CropParams;
 }
 
-export type WorkerRequest = MetadataRequest | CropRequest;
+export interface ResizeRequest {
+  action: 'resize';
+  data: ArrayBuffer;
+  params: ResizeParams;
+}
+
+export type WorkerRequest = MetadataRequest | CropRequest | ResizeRequest;
 
 export interface WorkerSuccessResponse {
   success: true;
   metadata: ImageMetadata;
   croppedImage?: ArrayBuffer;
+  resizedImage?: ArrayBuffer;
 }
 
 export interface WorkerErrorResponse {

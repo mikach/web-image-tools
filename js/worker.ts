@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-import init, { read_image_metadata, init_logging, crop_image } from '../wasm/pkg/wasm.js';
+import init, { read_image_metadata, init_logging, crop_image, resize_image } from '../wasm/pkg/wasm.js';
 import type { WorkerResponse, WorkerRequest, ImageMetadata } from './types';
 
 let wasmInitialized = false;
@@ -66,6 +66,18 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
                 croppedImage: croppedBuffer
             };
             self.postMessage(response, [croppedBuffer]);
+        } else if (request.action === 'resize') {
+            const { width, height, filter } = request.params;
+            const resizedData = resize_image(data, width, height, filter);
+            const metadata = read_image_metadata(resizedData) as WasmImageMetadata;
+
+            const resizedBuffer = resizedData.buffer as ArrayBuffer;
+            const response: WorkerResponse = {
+                success: true,
+                metadata: mapWasmMetadata(metadata),
+                resizedImage: resizedBuffer
+            };
+            self.postMessage(response, [resizedBuffer]);
         } else {
             const metadata = read_image_metadata(data) as WasmImageMetadata;
 
