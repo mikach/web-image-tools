@@ -2,7 +2,6 @@ import type { WorkerResponse, ImageMetadata, MetadataRequest, CropRequest, CropP
 import * as dom from './dom';
 import { 
     getInitialCropSelection, 
-    constrainCropSelection, 
     getNaturalCropCoordinates,
     setupCropInteraction 
 } from './cropping';
@@ -13,7 +12,6 @@ import {
 import {
     getDefaultAdjustParams,
     resetSliders,
-    getCurrentAdjustParams,
     setupAdjustmentSliders
 } from './adjustments';
 
@@ -95,15 +93,16 @@ function renderMetadataItem(label: string, value: string): string {
 }
 
 function renderMetadata(metadata: ImageMetadata, fileSize: number): string {
-    const items = [
-        renderMetadataItem('Format', metadata.format),
-        renderMetadataItem('File Size', formatFileSize(fileSize)),
-        renderMetadataItem('Dimensions', `${metadata.width} × ${metadata.height}`),
-        renderMetadataItem('Color Type', metadata.colorType),
-        renderMetadataItem('Bits Per Pixel', String(metadata.bitsPerPixel)),
-        renderMetadataItem('Has Alpha', metadata.hasAlpha ? 'Yes' : 'No'),
-        renderMetadataItem('Aspect Ratio', metadata.aspectRatio.toFixed(2)),
-    ];
+    const items: string[] = [];
+
+    // Basic info
+    items.push(renderMetadataItem('Format', metadata.format));
+    items.push(renderMetadataItem('Dimensions', `${metadata.width} × ${metadata.height}`));
+    items.push(renderMetadataItem('File Size', formatFileSize(fileSize)));
+    items.push(renderMetadataItem('Color Type', metadata.colorType));
+    items.push(renderMetadataItem('Bits/Pixel', String(metadata.bitsPerPixel)));
+    items.push(renderMetadataItem('Alpha', metadata.hasAlpha ? 'Yes' : 'No'));
+    items.push(renderMetadataItem('Aspect Ratio', metadata.aspectRatio.toFixed(2)));
 
     // Camera info
     if (metadata.cameraMake || metadata.cameraModel) {
@@ -129,7 +128,7 @@ function renderMetadata(metadata: ImageMetadata, fileSize: number): string {
     }
 
     if (metadata.shutterSpeed) {
-        items.push(renderMetadataItem('Shutter Speed', metadata.shutterSpeed));
+        items.push(renderMetadataItem('Shutter', metadata.shutterSpeed));
     }
 
     if (metadata.focalLength) {
@@ -137,7 +136,7 @@ function renderMetadata(metadata: ImageMetadata, fileSize: number): string {
     }
 
     if (metadata.exposureProgram) {
-        items.push(renderMetadataItem('Exposure Program', metadata.exposureProgram));
+        items.push(renderMetadataItem('Exposure', metadata.exposureProgram));
     }
 
     if (metadata.flash) {
@@ -152,68 +151,87 @@ function renderMetadata(metadata: ImageMetadata, fileSize: number): string {
 }
 
 function renderState() {
+    // Toggle views
     if (state.view === 'dropzone') {
         dom.dropzoneView.classList.remove('hidden');
         dom.resultView.classList.add('hidden');
+        dom.fileNameEl.textContent = 'Web Image Tools';
     } else {
         dom.dropzoneView.classList.add('hidden');
         dom.resultView.classList.remove('hidden');
     }
 
-    dom.cropBtn.disabled = state.isProcessing;
-    dom.rotateLeftBtn.disabled = state.isProcessing;
-    dom.rotateRightBtn.disabled = state.isProcessing;
-    dom.resizeBtn.disabled = state.isProcessing;
-    dom.adjustBtn.disabled = state.isProcessing;
-    dom.changeImageBtn.disabled = state.isProcessing;
+    // Update filename in header
+    if (state.currentImage) {
+        dom.fileNameEl.textContent = state.currentImage.fileName;
+    }
 
+    // Update info bar and details
+    if (state.currentImage?.metadata) {
+        const { metadata } = state.currentImage;
+        dom.imageDimensionsEl.textContent = `${metadata.width} × ${metadata.height}`;
+        dom.imageFormatEl.textContent = metadata.format;
+        dom.imageSizeEl.textContent = formatFileSize(state.currentImage.fileSize);
+        dom.infoDetailsContent.innerHTML = renderMetadata(metadata, state.currentImage.fileSize);
+        dom.infoToggleBtn.style.display = '';
+    } else {
+        dom.imageDimensionsEl.textContent = '--';
+        dom.imageFormatEl.textContent = '--';
+        dom.imageSizeEl.textContent = '--';
+        dom.infoDetailsContent.innerHTML = '';
+        dom.infoToggleBtn.style.display = 'none';
+    }
+
+    // Update button states
+    const toolsDisabled = state.isProcessing || state.isCropping || state.isResizing || state.isAdjusting;
+    dom.cropBtn.disabled = toolsDisabled;
+    dom.rotateLeftBtn.disabled = toolsDisabled;
+    dom.rotateRightBtn.disabled = toolsDisabled;
+    dom.resizeBtn.disabled = toolsDisabled;
+    dom.adjustBtn.disabled = toolsDisabled;
+    dom.changeImageBtn.disabled = state.isProcessing;
+    dom.saveBtn.disabled = state.isProcessing || !state.currentImage;
+
+    // Update active states on tool buttons
+    dom.cropBtn.classList.toggle('active', state.isCropping);
+    dom.resizeBtn.classList.toggle('active', state.isResizing);
+    dom.adjustBtn.classList.toggle('active', state.isAdjusting);
+
+    // Toggle tool panels
     if (state.isCropping) {
         dom.cropOverlay.classList.remove('hidden');
-        dom.previewActions.classList.add('hidden');
         dom.cropActions.classList.remove('hidden');
         dom.resizeControls.classList.add('hidden');
         dom.adjustControls.classList.add('hidden');
     } else if (state.isResizing) {
         dom.cropOverlay.classList.add('hidden');
-        dom.previewActions.classList.add('hidden');
         dom.cropActions.classList.add('hidden');
         dom.resizeControls.classList.remove('hidden');
         dom.adjustControls.classList.add('hidden');
     } else if (state.isAdjusting) {
         dom.cropOverlay.classList.add('hidden');
-        dom.previewActions.classList.add('hidden');
         dom.cropActions.classList.add('hidden');
         dom.resizeControls.classList.add('hidden');
         dom.adjustControls.classList.remove('hidden');
     } else {
         dom.cropOverlay.classList.add('hidden');
-        dom.previewActions.classList.remove('hidden');
         dom.cropActions.classList.add('hidden');
         dom.resizeControls.classList.add('hidden');
         dom.adjustControls.classList.add('hidden');
     }
 
+    // Update crop selection position
     dom.cropSelectionEl.style.left = `${state.cropSelection.x}px`;
     dom.cropSelectionEl.style.top = `${state.cropSelection.y}px`;
     dom.cropSelectionEl.style.width = `${state.cropSelection.width}px`;
     dom.cropSelectionEl.style.height = `${state.cropSelection.height}px`;
 
+    // Update crop dimensions display
     if (state.isCropping && state.currentImage?.metadata) {
         const natural = getNaturalCropCoordinates(state.cropSelection);
         const w = Math.round(natural.width);
         const h = Math.round(natural.height);
         dom.cropDimensionsEl.textContent = `${w} × ${h} px`;
-    }
-
-    if (state.currentImage) {
-        dom.fileNameEl.textContent = state.currentImage.fileName;
-    }
-
-    if (state.currentImage?.metadata) {
-        dom.resultContainer.innerHTML = renderMetadata(
-            state.currentImage.metadata,
-            state.currentImage.fileSize
-        );
     }
 }
 
@@ -221,13 +239,10 @@ async function processFile(file: File) {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-        dom.resultContainer.innerHTML = '<p style="color: hsl(var(--destructive));">Invalid file type. Please select an image file.</p>';
-        setState({ view: 'result' });
+        console.error('Invalid file type. Please select an image file.');
         return;
     }
 
-    dom.resultContainer.innerHTML = '<p class="text-muted">Processing image...</p>';
-    
     const objectUrl = URL.createObjectURL(file);
     setImagePreview(objectUrl);
 
@@ -252,7 +267,7 @@ async function processFile(file: File) {
         
         worker.postMessage(request, [request.data]);
     } catch (error) {
-        dom.resultContainer.innerHTML = `<p style="color: hsl(var(--destructive));">Error reading file: ${error}</p>`;
+        console.error('Error reading file:', error);
         setState({ isProcessing: false });
     }
 }
@@ -269,7 +284,7 @@ function finishCropping(apply: boolean) {
 
     if (apply) {
         if (!state.currentImage?.buffer) {
-            dom.resultContainer.innerHTML = '<p style="color: hsl(var(--destructive));">No image loaded.</p>';
+            console.error('No image loaded.');
             return;
         }
 
@@ -281,7 +296,6 @@ function finishCropping(apply: boolean) {
             params: naturalCrop
         };
 
-        dom.resultContainer.innerHTML = '<p class="text-muted">Cropping image...</p>';
         setState({ isProcessing: true });
         worker.postMessage(request, [request.data]);
     }
@@ -312,7 +326,7 @@ function finishResizing(apply: boolean) {
 
     if (apply) {
         if (!state.currentImage?.buffer) {
-            dom.resultContainer.innerHTML = '<p style="color: hsl(var(--destructive));">No image loaded.</p>';
+            console.error('No image loaded.');
             return;
         }
 
@@ -327,7 +341,6 @@ function finishResizing(apply: boolean) {
             }
         };
 
-        dom.resultContainer.innerHTML = '<p class="text-muted">Resizing image...</p>';
         setState({ isProcessing: true });
         worker.postMessage(request, [request.data]);
     }
@@ -339,7 +352,7 @@ function updateResizeParams(params: Partial<ResizeParams>) {
 
 function rotateImage(direction: RotateDirection) {
     if (!state.currentImage?.buffer) {
-        dom.resultContainer.innerHTML = '<p style="color: hsl(var(--destructive));">No image loaded.</p>';
+        console.error('No image loaded.');
         return;
     }
 
@@ -349,7 +362,6 @@ function rotateImage(direction: RotateDirection) {
         direction
     };
 
-    dom.resultContainer.innerHTML = '<p class="text-muted">Rotating image...</p>';
     setState({ isProcessing: true });
     worker.postMessage(request, [request.data]);
 }
@@ -367,7 +379,7 @@ function finishAdjusting(apply: boolean) {
 
     if (apply) {
         if (!state.currentImage?.buffer) {
-            dom.resultContainer.innerHTML = '<p style="color: hsl(var(--destructive));">No image loaded.</p>';
+            console.error('No image loaded.');
             return;
         }
 
@@ -377,7 +389,6 @@ function finishAdjusting(apply: boolean) {
             params: state.adjustParams
         };
 
-        dom.resultContainer.innerHTML = '<p class="text-muted">Adjusting image...</p>';
         setState({ isProcessing: true });
         worker.postMessage(request, [request.data]);
     }
@@ -387,6 +398,25 @@ function updateAdjustParams(params: AdjustParams) {
     setState({ adjustParams: params });
 }
 
+function saveImage() {
+    if (!state.currentImage?.buffer) return;
+
+    const metadata = state.currentImage.metadata;
+    const format = metadata?.format.toLowerCase() ?? 'png';
+    const mimeType = format === 'jpeg' ? 'image/jpeg' : `image/${format}`;
+
+    const blob = new Blob([state.currentImage.buffer], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = state.currentImage.fileName;
+    a.click();
+
+    URL.revokeObjectURL(url);
+}
+
+// Event listeners
 dom.filePicker.addEventListener('change', (event) => {
     const target = event.target as HTMLInputElement;
     const file = target.files?.[0];
@@ -401,12 +431,23 @@ dom.uploadSection.addEventListener('click', () => {
 
 document.getElementById('theme-toggle')?.addEventListener('click', toggleTheme);
 
+dom.saveBtn.addEventListener('click', saveImage);
+
+dom.infoToggleBtn.addEventListener('click', () => {
+    const isExpanded = dom.infoDetails.classList.toggle('hidden');
+    dom.infoToggleBtn.classList.toggle('expanded', !isExpanded);
+});
+
 dom.changeImageBtn.addEventListener('click', () => {
     dom.filePicker.click();
 });
 
 dom.cropBtn.addEventListener('click', () => {
-    startCropping();
+    if (state.isCropping) {
+        finishCropping(false);
+    } else {
+        startCropping();
+    }
 });
 
 dom.rotateLeftBtn.addEventListener('click', () => {
@@ -428,7 +469,11 @@ dom.cropCancelBtn.addEventListener('click', () => {
 setupCropInteraction(updateCropSelection);
 
 dom.resizeBtn.addEventListener('click', () => {
-    startResizing();
+    if (state.isResizing) {
+        finishResizing(false);
+    } else {
+        startResizing();
+    }
 });
 
 dom.resizeApplyBtn.addEventListener('click', () => {
@@ -442,7 +487,11 @@ dom.resizeCancelBtn.addEventListener('click', () => {
 setupResizeInputs(updateResizeParams);
 
 dom.adjustBtn.addEventListener('click', () => {
-    startAdjusting();
+    if (state.isAdjusting) {
+        finishAdjusting(false);
+    } else {
+        startAdjusting();
+    }
 });
 
 dom.adjustApplyBtn.addEventListener('click', () => {
@@ -460,6 +509,7 @@ dom.adjustResetBtn.addEventListener('click', () => {
 
 setupAdjustmentSliders(updateAdjustParams);
 
+// Drag and drop handlers
 dom.uploadSection.addEventListener('dragover', (event) => {
     event.preventDefault();
     event.stopPropagation();
@@ -508,6 +558,7 @@ document.addEventListener('drop', (event) => {
     }
 });
 
+// Worker message handler
 worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
     const response = event.data;
 
@@ -588,13 +639,12 @@ worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
             });
         }
     } else {
-        dom.resultContainer.innerHTML = `<p style="color: hsl(var(--destructive));">Error processing image: ${response.error}</p>`;
+        console.error('Error processing image:', response.error);
         setState({ isProcessing: false });
     }
 };
 
 worker.onerror = (error) => {
     console.error('Worker error:', error);
-    dom.resultContainer.innerHTML = `<p style="color: hsl(var(--destructive));">Worker error occurred.</p>`;
     setState({ isProcessing: false });
 };

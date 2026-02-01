@@ -7,14 +7,19 @@
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
-    <button id="theme-toggle" class="btn btn-secondary theme-toggle" title="Toggle theme">
-        <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
-        <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    </button>
     <div id="app">
-        <header>
-            <h1>Web Image Tools</h1>
-            <p class="text-muted">High-performance image processing powered by WebAssembly.</p>
+        <header class="top-bar">
+            <h1 id="file-name" class="file-name">Web Image Tools</h1>
+            <div class="top-bar-actions">
+                <button id="theme-toggle" class="btn btn-ghost btn-icon" title="Toggle theme">
+                    <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                    <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                </button>
+                <button id="save-btn" class="btn btn-primary" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                    Save
+                </button>
+            </div>
         </header>
 
         <main id="dropzone-view" class="dropzone-view">
@@ -28,51 +33,58 @@
         </main>
 
         <main id="result-view" class="result-view hidden">
-            <div class="result-grid">
-                <div class="preview-column">
-                    <div class="card preview-card" id="preview-card">
-                        <div class="preview-wrapper">
-                            <img id="image-preview" src="" alt="Image preview">
-                            <div id="crop-overlay" class="crop-overlay hidden">
-                                <div id="crop-selection" class="crop-selection">
-                                    <div id="crop-dimensions" class="crop-dimensions"></div>
-                                    <div class="crop-handle nw" data-handle="nw"></div>
-                                    <div class="crop-handle ne" data-handle="ne"></div>
-                                    <div class="crop-handle sw" data-handle="sw"></div>
-                                    <div class="crop-handle se" data-handle="se"></div>
-                                </div>
+            <div class="preview-area">
+                <div class="card preview-card" id="preview-card">
+                    <div class="preview-wrapper">
+                        <img id="image-preview" src="" alt="Image preview">
+                        <div id="crop-overlay" class="crop-overlay hidden">
+                            <div id="crop-selection" class="crop-selection">
+                                <div id="crop-dimensions" class="crop-dimensions"></div>
+                                <div class="crop-handle nw" data-handle="nw"></div>
+                                <div class="crop-handle ne" data-handle="ne"></div>
+                                <div class="crop-handle sw" data-handle="sw"></div>
+                                <div class="crop-handle se" data-handle="se"></div>
                             </div>
                         </div>
                     </div>
-                    <div class="preview-actions">
-                        <button id="crop-btn" class="btn btn-primary">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>
-                            Crop
-                        </button>
-                        <button id="rotate-left-btn" class="btn btn-secondary" title="Rotate left 90°">
+                </div>
+            </div>
+
+            <aside class="tool-sidebar">
+                <div class="tool-buttons">
+                    <button id="crop-btn" class="btn btn-tool" title="Crop">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>
+                        Crop
+                    </button>
+                    <button id="resize-btn" class="btn btn-tool" title="Resize">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+                        Resize
+                    </button>
+                    <div class="btn-group">
+                        <button id="rotate-left-btn" class="btn btn-tool btn-tool-half" title="Rotate left 90°">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                         </button>
-                        <button id="rotate-right-btn" class="btn btn-secondary" title="Rotate right 90°">
+                        <button id="rotate-right-btn" class="btn btn-tool btn-tool-half" title="Rotate right 90°">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
                         </button>
-                        <button id="resize-btn" class="btn btn-primary">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
-                            Resize
-                        </button>
-                        <button id="adjust-btn" class="btn btn-primary">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
-                            Adjust
-                        </button>
-                        <button id="change-image-btn" class="btn btn-secondary">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
-                            Change image
-                        </button>
                     </div>
-                    <div id="crop-actions" class="preview-actions hidden">
-                        <button id="crop-done-btn" class="btn btn-primary">Done</button>
-                        <button id="crop-cancel-btn" class="btn btn-secondary">Cancel</button>
+                    <button id="adjust-btn" class="btn btn-tool" title="Adjust">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" x2="4" y1="21" y2="14"/><line x1="4" x2="4" y1="10" y2="3"/><line x1="12" x2="12" y1="21" y2="12"/><line x1="12" x2="12" y1="8" y2="3"/><line x1="20" x2="20" y1="21" y2="16"/><line x1="20" x2="20" y1="12" y2="3"/><line x1="2" x2="6" y1="14" y2="14"/><line x1="10" x2="14" y1="8" y2="8"/><line x1="18" x2="22" y1="16" y2="16"/></svg>
+                        Adjust
+                    </button>
+                </div>
+
+                <div class="tool-panel">
+                    <div id="crop-actions" class="tool-panel-content hidden">
+                        <h4 class="tool-panel-title">Crop</h4>
+                        <div class="tool-panel-actions">
+                            <button id="crop-done-btn" class="btn btn-primary btn-sm">Apply</button>
+                            <button id="crop-cancel-btn" class="btn btn-secondary btn-sm">Cancel</button>
+                        </div>
                     </div>
-                    <div id="resize-controls" class="resize-controls hidden">
+
+                    <div id="resize-controls" class="tool-panel-content hidden">
+                        <h4 class="tool-panel-title">Resize</h4>
                         <div class="resize-input-group">
                             <label class="resize-label">
                                 Width
@@ -85,7 +97,7 @@
                         </div>
                         <label class="checkbox-label">
                             <input type="checkbox" id="maintain-ratio" checked>
-                            Maintain aspect ratio
+                            Lock ratio
                         </label>
                         <label class="resize-label">
                             Quality
@@ -95,14 +107,16 @@
                                 <option value="nearest">Fast (Nearest)</option>
                             </select>
                         </label>
-                        <div class="resize-actions">
-                            <button id="resize-apply-btn" class="btn btn-primary">Apply</button>
-                            <button id="resize-cancel-btn" class="btn btn-secondary">Cancel</button>
+                        <div class="tool-panel-actions">
+                            <button id="resize-apply-btn" class="btn btn-primary btn-sm">Apply</button>
+                            <button id="resize-cancel-btn" class="btn btn-secondary btn-sm">Cancel</button>
                         </div>
                     </div>
-                    <div id="adjust-controls" class="adjust-controls hidden">
+
+                    <div id="adjust-controls" class="tool-panel-content hidden">
+                        <h4 class="tool-panel-title">Adjust</h4>
                         <div class="adjust-group">
-                            <h4 class="adjust-group-title">Tone</h4>
+                            <span class="adjust-group-label">Tone</span>
                             <label class="adjust-slider">
                                 <span class="adjust-slider-label">Brightness</span>
                                 <input type="range" id="adjust-brightness" min="-100" max="100" value="0">
@@ -125,7 +139,7 @@
                             </label>
                         </div>
                         <div class="adjust-group">
-                            <h4 class="adjust-group-title">Color</h4>
+                            <span class="adjust-group-label">Color</span>
                             <label class="adjust-slider">
                                 <span class="adjust-slider-label">Saturation</span>
                                 <input type="range" id="adjust-saturation" min="0" max="200" value="100">
@@ -143,7 +157,7 @@
                             </label>
                         </div>
                         <div class="adjust-group">
-                            <h4 class="adjust-group-title">Light</h4>
+                            <span class="adjust-group-label">Light</span>
                             <label class="adjust-slider">
                                 <span class="adjust-slider-label">Shadows</span>
                                 <input type="range" id="adjust-shadows" min="-100" max="100" value="0">
@@ -155,25 +169,42 @@
                                 <span id="adjust-highlights-value" class="adjust-slider-value">0</span>
                             </label>
                         </div>
-                        <div class="adjust-actions">
-                            <button id="adjust-apply-btn" class="btn btn-primary">Apply</button>
-                            <button id="adjust-cancel-btn" class="btn btn-secondary">Cancel</button>
-                            <button id="adjust-reset-btn" class="btn btn-secondary">Reset</button>
+                        <div class="tool-panel-actions">
+                            <button id="adjust-apply-btn" class="btn btn-primary btn-sm">Apply</button>
+                            <button id="adjust-cancel-btn" class="btn btn-secondary btn-sm">Cancel</button>
+                            <button id="adjust-reset-btn" class="btn btn-ghost btn-sm">Reset</button>
                         </div>
                     </div>
                 </div>
 
-                <div class="info-column">
-                    <div class="card info-card">
-                        <div class="info-header">
-                            <h2 id="file-name" class="file-name">filename.png</h2>
-                        </div>
-                        <div id="result-container" class="result-container">
-                            <p class="text-muted">Processing...</p>
-                        </div>
+                <div class="sidebar-footer">
+                    <button id="change-image-btn" class="btn btn-secondary btn-sm" style="width: 100%;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                        Change Image
+                    </button>
+                </div>
+            </aside>
+
+            <footer class="info-footer">
+                <div class="info-bar">
+                    <div class="info-bar-left">
+                        <span id="image-dimensions" class="info-item">--</span>
+                        <span class="info-separator">•</span>
+                        <span id="image-format" class="info-item">--</span>
+                        <span class="info-separator">•</span>
+                        <span id="image-size" class="info-item">--</span>
+                    </div>
+                    <button id="info-toggle-btn" class="btn btn-ghost btn-sm info-toggle-btn" title="Show image details">
+                        <svg class="icon-chevron" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+                        Details
+                    </button>
+                </div>
+                <div id="info-details" class="info-details hidden">
+                    <div id="info-details-content" class="info-details-content">
+                        <!-- Metadata will be rendered here -->
                     </div>
                 </div>
-            </div>
+            </footer>
         </main>
     </div>
     <script type="module" src="/js/main.ts"></script>

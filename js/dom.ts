@@ -4,33 +4,42 @@ function getElement<T extends HTMLElement>(id: string): T {
     return el as T;
 }
 
-function querySelector<T extends Element>(selector: string): T {
-    const el = document.querySelector(selector);
-    if (!el) throw new Error(`Required element ${selector} not found`);
-    return el as T;
-}
-
+// Core elements
 export const filePicker = getElement<HTMLInputElement>('file-picker');
 export const uploadSection = getElement<HTMLDivElement>('upload-section');
 export const dropzoneView = getElement<HTMLElement>('dropzone-view');
 export const resultView = getElement<HTMLElement>('result-view');
-export const resultContainer = getElement<HTMLDivElement>('result-container');
 export const imagePreview = getElement<HTMLImageElement>('image-preview');
+
+// Top bar elements
 export const fileNameEl = getElement<HTMLHeadingElement>('file-name');
-export const changeImageBtn = getElement<HTMLButtonElement>('change-image-btn');
+export const saveBtn = getElement<HTMLButtonElement>('save-btn');
+
+// Info bar elements
+export const imageDimensionsEl = getElement<HTMLSpanElement>('image-dimensions');
+export const imageFormatEl = getElement<HTMLSpanElement>('image-format');
+export const imageSizeEl = getElement<HTMLSpanElement>('image-size');
+export const infoToggleBtn = getElement<HTMLButtonElement>('info-toggle-btn');
+export const infoDetails = getElement<HTMLDivElement>('info-details');
+export const infoDetailsContent = getElement<HTMLDivElement>('info-details-content');
+
+// Tool buttons
 export const cropBtn = getElement<HTMLButtonElement>('crop-btn');
+export const resizeBtn = getElement<HTMLButtonElement>('resize-btn');
 export const rotateLeftBtn = getElement<HTMLButtonElement>('rotate-left-btn');
 export const rotateRightBtn = getElement<HTMLButtonElement>('rotate-right-btn');
-export const cropDoneBtn = getElement<HTMLButtonElement>('crop-done-btn');
-export const cropCancelBtn = getElement<HTMLButtonElement>('crop-cancel-btn');
+export const adjustBtn = getElement<HTMLButtonElement>('adjust-btn');
+export const changeImageBtn = getElement<HTMLButtonElement>('change-image-btn');
+
+// Crop elements
 export const cropOverlay = getElement<HTMLDivElement>('crop-overlay');
 export const cropSelectionEl = getElement<HTMLDivElement>('crop-selection');
 export const cropDimensionsEl = getElement<HTMLDivElement>('crop-dimensions');
-export const previewActions = querySelector<HTMLDivElement>('.preview-actions');
 export const cropActions = getElement<HTMLDivElement>('crop-actions');
+export const cropDoneBtn = getElement<HTMLButtonElement>('crop-done-btn');
+export const cropCancelBtn = getElement<HTMLButtonElement>('crop-cancel-btn');
 
 // Resize elements
-export const resizeBtn = getElement<HTMLButtonElement>('resize-btn');
 export const resizeControls = getElement<HTMLDivElement>('resize-controls');
 export const resizeWidthInput = getElement<HTMLInputElement>('resize-width');
 export const resizeHeightInput = getElement<HTMLInputElement>('resize-height');
@@ -40,7 +49,6 @@ export const resizeApplyBtn = getElement<HTMLButtonElement>('resize-apply-btn');
 export const resizeCancelBtn = getElement<HTMLButtonElement>('resize-cancel-btn');
 
 // Adjust elements
-export const adjustBtn = getElement<HTMLButtonElement>('adjust-btn');
 export const adjustControls = getElement<HTMLDivElement>('adjust-controls');
 
 // Adjust sliders
