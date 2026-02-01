@@ -17,6 +17,24 @@ import {
     setupAdjustmentSliders
 } from './adjustments';
 
+// Theme management
+function initTheme(): void {
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+        document.documentElement.classList.add('dark');
+    }
+}
+
+function toggleTheme(): void {
+    const isDark = document.documentElement.classList.toggle('dark');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+}
+
+// Initialize theme immediately
+initTheme();
+
 const worker = new Worker(new URL('./worker.ts', import.meta.url), {
     type: 'module'
 });
@@ -380,6 +398,8 @@ dom.filePicker.addEventListener('change', (event) => {
 dom.uploadSection.addEventListener('click', () => {
     dom.filePicker.click();
 });
+
+document.getElementById('theme-toggle')?.addEventListener('click', toggleTheme);
 
 dom.changeImageBtn.addEventListener('click', () => {
     dom.filePicker.click();
